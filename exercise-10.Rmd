@@ -1,13 +1,13 @@
 ---
 title: "exercise-10"
 author: "SLCornett"
-date: "4/5/2022"
+date: "5-8 April 2022"
 output: 
   html_document: 
     highlight: textmate
     theme: darkly
 ---
-# ***Excercise 10: Week 11 Class Exercise***
+# ***Exercise 10: Week 11 Programming Exercise - Check Assumptions of Regression***
 
 Preliminaries
 ```{r}
@@ -94,11 +94,23 @@ lsbm_m3_resid
 # B
 # body mass = explanatory variable
 # model 1 vs model 1 residuals
-plot(lsbm_m1$model$Body_mass_female_mean, lsbm_m1_resid)
+plot(lsbm_m1$model$Body_mass_female_mean, lsbm_m1_resid, 
+     main = "Linear Model 1 ~ Model 1 Residuals",  #main title
+     sub = "(model 1: linear model of lifespan ~ Female body mass)", # subtitle
+     xlab = "model 1", # x-axis label
+     ylab = "model 1 residuals") # y-axis label
 # model 2 vs model 2 residual
-plot(lsbm_m2$model$`log(Body_mass_female_mean)`, lsbm_m2_resid)
+plot(lsbm_m2$model$`log(Body_mass_female_mean)`, lsbm_m2_resid,
+     main = "Linear Model 2 ~ Model 2 Residuals",  #main title
+     sub = "(model 2: linear model of lifespan ~ log(Female body mass))",
+     xlab = "model 2",
+     ylab = "model 2 residuals")
 # model 3 vs model 2 residual
-plot(lsbm_m3$model$`log(Body_mass_female_mean)`, lsbm_m3_resid)
+plot(lsbm_m3$model$`log(Body_mass_female_mean)`, lsbm_m3_resid,
+     main = "Linear Model 3 ~ Model 3 Residuals",
+     sub = "(model 3: log(linear model of lifespan) ~ log(Female body mass))",
+     xlab = "model 3",
+     ylab = "model 3 residuals")
 ```
 
 
