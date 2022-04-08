@@ -1,0 +1,166 @@
+---
+title: "exercise-10"
+author: "SLCornett"
+date: "4/5/2022"
+output: 
+  html_document: 
+    highlight: textmate
+    theme: darkly
+---
+# ***Excercise 10: Week 11 Class Exercise***
+
+Preliminaries
+```{r}
+library(tidyverse) # always necessary for so many things (reqd_cvs, etc.)
+library(tidyr) # drop_na()
+library(dplyr) # for %>% and mutate()
+library(ggplot2) # for ggplot
+library(car) # for qqPlot
+```
+
+
+1. Using the {tidyverse} read_csv() function, load the “KamilarAndCooperData.csv” dataset from this URL as a “tibble” named **d**.
+```{r}
+f <- "https://raw.githubusercontent.com/difiore/ada-2022-datasets/main/KamilarAndCooperData.csv"
+d <- read_csv(f, col_names = TRUE)
+print(d)
+```
+
+
+2. From this dataset, plot lifespan (**MaxLongevity_m**) versus female body mass (**Body_mass_female_mean**).
+```{r}
+# filter out all the NA from the columns -> not necessary but gets rid of the warming message from ggplot ("Removed 72 rows containing missing values (geom_point)")
+df <- d %>% # pinned and exclamation mark before is "not", only matters for this part, so making a different dataframe, so it won't affect the linear models where don't need to drop the NAs
+  drop_na(Body_mass_female_mean, MaxLongevity_m) # drop_na Drops rows containing missing values, {tidyr}
+
+# plot F body mass vs lifespan
+# plot 1
+# plot(d$Body_mass_female_mean, d$MaxLongevity_m) #no linear relationship
+p1 <- ggplot(data = df, aes(x = Body_mass_female_mean, y = MaxLongevity_m)) 
+p1 <- p1 + geom_point()
+p1 #no linear relationship
+
+#plot 2
+# plot(log(d$Body_mass_female_mean), d$MaxLongevity_m) # more linear relationship
+p2 <- ggplot(data = df, aes(x = log(Body_mass_female_mean), y = MaxLongevity_m)) 
+p2 <- p2 + geom_point()
+p2 # missing values (NA) # more linear relationship
+
+# plot 3
+# plot(log(d$Body_mass_female_mean), log(d$MaxLongevity_m)) # more linear relationship
+p3 <- ggplot(data = df, aes(x = log(Body_mass_female_mean), y = log(MaxLongevity_m))) 
+p3 <- p3 + geom_point()
+p3
+```
+
+**Q1:** Is the relationship linear? A1: plot 2 and 3 have  relatively linear relationships, but not plot 1. **Q2:** If not, how might you transform one or both variable to more closely approximate a linear relationship? A2: log transformations seem to help, as seen in plots 2 and 3. 
+
+
+3. Run linear models of the comparisons of the following: **Lifespan ~ female body mass** (model 1), **lifespan ~ log(female body mass)** (model 2), and **log(lifespan) ~ log(female body mass)** (model 3).
+```{r}
+# lifespan body mass = lsbm
+# using d because don't need to drop_na in linear models.
+# model 1: linear model of lifespan vs. Female body mass
+lsbm_m1 <- lm(data = d, MaxLongevity_m ~ Body_mass_female_mean) #creating linear model
+lsbm_m1 
+
+# model 2: linear model of lifespan vs. log(Female body mass)
+lsbm_m2 <- lm(data = d, MaxLongevity_m ~ log(Body_mass_female_mean)) # creating linear model
+lsbm_m2
+
+# model 3: linear model of log(lifespan0 vs. log(Female body mass)
+lsbm_m3 <- lm(data = d, log(MaxLongevity_m) ~ log(Body_mass_female_mean))
+lsbm_m3
+```
+
+
+4. [A] Generate residuals for all three linear models,
+```{r}
+# A
+#Residuals for model 1
+lsbm_m1_resid <- lsbm_m1$residuals
+lsbm_m1_resid #print it out
+#residuals for model 2
+lsbm_m2_resid <- lsbm_m2$residuals
+lsbm_m2_resid
+#residuals for model 3
+lsbm_m3_resid <- lsbm_m3$residuals
+lsbm_m3_resid
+```
+
+
+[B] plot them by hand in relation to the corresponding explanatory variable,
+```{r}
+# B
+# body mass = explanatory variable
+# model 1 vs model 1 residuals
+plot(lsbm_m1$model$Body_mass_female_mean, lsbm_m1_resid)
+# model 2 vs model 2 residual
+plot(lsbm_m2$model$`log(Body_mass_female_mean)`, lsbm_m2_resid)
+# model 3 vs model 2 residual
+plot(lsbm_m3$model$`log(Body_mass_female_mean)`, lsbm_m3_resid)
+```
+
+
+then [C] make histograms of the residuals.
+```{r}
+# C 
+# model 1 residuals
+hist(lsbm_m1_resid, xlim = c(-4 * sd(lsbm_m1_resid), 4 * sd(lsbm_m1_resid)), breaks = 20, main = "Histogram of lifespan vs. Female body mass (Model 1) Residuals")
+# model 2 residuals 
+hist(lsbm_m2_resid, xlim = c(-4 * sd(lsbm_m2_resid), 4 * sd(lsbm_m2_resid)), breaks = 20, main = "Histogram of lifespan vs. log(Female body mass) (Model 2) Residuals")
+# model 3 residuals
+hist(lsbm_m3_resid, xlim = c(-4 * sd(lsbm_m3_resid), 4 * sd(lsbm_m3_resid)), breaks = 20, main = "Histogram of log(lifespan) vs. log(Female body mass) (Model 3) Residuals")
+```
+
+**Q:** Do they appear normally distributed? A: They appear relatively normally distributed, but they could be more normally distributed. 
+
+
+5. Generate QQ plots for all three linear models.
+[From the module: _*qqPlot()* provides a trend line and confidence intervals that allow us to see exactly which points make the sample fall outside of normality (if any)_]
+```{r}
+# qqPlot from {car}, id=FALSE` means that outlier observations will not be labelled
+# model 1
+qqPlot(lsbm_m1, distribution = "norm", id = FALSE)  
+# model 2
+qqPlot(lsbm_m2, distribution = "norm", id = FALSE)
+# model 3
+qqPlot(lsbm_m3, distribution = "norm", id = FALSE)
+```
+
+**Q1:**  Do they appear to be normally distributed? Yes, they all 3 appear mostly normally distributed, as the data points are mostly within the normal distrubution range (blue). This is especially true for model 3 and to a lesser degree model 2, but least true for model 1.  **Q2**: Based on visual inspection of the QQ plots, do the residual appear to deviate from being normally distributed? in the qqPlot of model 1, yes, there are residuals that appear to deviate from being normally distributed. The is also seen to a lesser extend in the qqPlot of model 2. This is not seen in model 3. 
+
+
+6. Run the **plot()** command on all three models.
+[From module 19.5: _An additional way to quickly examine your residuals is to use the plot() function with your model as an argument. This prints out four plots that each tell you something._]
+```{r}
+# model 1
+par(mfrow = c(2, 2)) # from {car}, so will output in 1 image
+plot(lsbm_m1)
+
+# model 2
+par(mfrow = c(2, 2)) 
+plot(lsbm_m2)
+
+# model 3
+par(mfrow = c(2, 2))
+plot(lsbm_m3)
+```
+
+**Q:** What do the plots suggest about whether the assumptions for regression are met for any of these models?  For the *“Residuals vs Fitted” plots* in models 2 and 3, especially 3, where I take the log() of both the explanatory (Body Mass) and response variable (lifespan), have roughly equal spread, especially compared to model 1 where there is almost no spread, and all points are clumbed. This suggests the residuals in model 3, and to a lesser extent model 2, have a non-linear relationship. In the *“Normal Q-Q” plot* for model 2 and 3 especially, the residual values all fall in roughly a stright line, while the residual values of model 1 fall roughly but not as tighly as models 2 and 3. This suggests model 3 and 2 are relatively normally distributed, and model 1 is but to a much lesser extent. For the *“Scale-Location" plot*, the graph suggests model 1 has a high magnitude of error variance at the relationship between y and x, because there is almost no spread, similar to the "residuals vs fitted graph". For model 2 and 3, there is spread across a mostly horizontal line, with a slight increase in the magnitude of difference across the fitted values of y. This is more true for model 2 than model 3. This suggests taking the log() of the two variables decreases the magnitude of difference/error in the data here. Lastly, for the *“Residuals vs. Leverage” plot*, in model 1, all the observations are on the left side, which suggests any outliers in the data have a strong influence over the rest of the dataset, however, this influence appears to be mitigated by taking the log of the explanatory and response variables. Models 2 and 3 show less influence of outlier observations. 
+
+7. Run a *Shapiro-Wilks test* on residuals for all three models. What do the results suggest? 
+[From module 19.5: "A *Shapiro-Wilk Normality Test* is where a low p value would indicate deviation from normality (technically, a measure of how far the trend line of the residuals deviates from the Q-Q plot line)."]
+```{r}
+# H0 = the sample is normally distributed; HA = the sample is not normally distributed. If p > a, then accept H0; If p </= a, then reject H0 in favor of HA.
+# model 1
+lsbm_s1 <- shapiro.test(lsbm_m1$residuals)
+lsbm_s1
+# model 2
+lsbm_s2 <- shapiro.test(lsbm_m2$residuals)
+lsbm_s2
+# model 3
+lsbm_s3 <- shapiro.test(lsbm_m3$residuals)
+lsbm_s3
+```
+**Q from class:** What do the results suggest? For model 3, because p> 0.05, I can accept the null hypothesis of a normal distribution of the residuals of the linear model. For model 1 and 2, the p-value is much less that 0.05, meaning I can accept the alternative hypothesis of the data not being normally distributed. 
